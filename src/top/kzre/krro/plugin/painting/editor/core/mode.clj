@@ -69,7 +69,7 @@
     [:block {:key :root :direction :vertical}
      ;; 顶部工具选择栏
      (tb/tool-bar-vnode canvas-id f)
-     [:block {:direction :horizontal}
+     [:split {:direction :horizontal}
       ;; 左侧画布
       [:krro.painting/canvas {:key canvas-id :krro.painting/canvas-id canvas-id}]
       ;; 右侧图层面板

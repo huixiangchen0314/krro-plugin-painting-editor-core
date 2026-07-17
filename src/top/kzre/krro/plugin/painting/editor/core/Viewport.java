@@ -3,6 +3,27 @@ package top.kzre.krro.plugin.painting.editor.core;
 public final class Viewport {
 
     /**
+     * 根据屏幕坐标和视口参数采样源像素。
+     *
+     * @param src     像素数据，长度为 srcW * srcH * 4，每个分量 0~1
+     * @param srcW    源图像宽度
+     * @param srcH    源图像高度
+     * @param sx      屏幕上的 x 坐标（像素）
+     * @param sy      屏幕上的 y 坐标（像素）
+     * @param offsetX 视口左上角在逻辑空间中的 X 偏移
+     * @param offsetY 视口左上角在逻辑空间中的 Y 偏移
+     * @param zoom    缩放比例
+     * @return 预乘 Alpha 的 ARGB int
+     */
+    public static int samplePixel(float[] src, int srcW, int srcH,
+                                  int sx, int sy,
+                                  double offsetX, double offsetY, double zoom) {
+        double lx = sx / zoom + offsetX;
+        double ly = sy / zoom + offsetY;
+        return samplePixel(src, srcW, srcH, lx, ly);
+    }
+
+    /**
      * 根据源图像（float RGBA 0~1）和连续坐标采样，返回预乘 Alpha 的 ARGB 整数。
      *
      * @param src  像素数据，长度为 srcW * srcH * 4，每个分量 0~1
