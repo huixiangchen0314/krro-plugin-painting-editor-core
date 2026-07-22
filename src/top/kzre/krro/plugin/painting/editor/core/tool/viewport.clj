@@ -1,8 +1,8 @@
 (ns top.kzre.krro.plugin.painting.editor.core.tool.viewport
   (:require
+    [top.kzre.krro.core.custom :as custom]
     [top.kzre.krro.plugin.painting.core.tool.protocol :as tb]
-    [top.kzre.krro.plugin.painting.editor.core.viewport :as vp]
-    [top.kzre.krro.core.custom :as custom]))
+    [top.kzre.krro.plugin.painting.core.viewport :as vp]))
 
 ;; ── 自定义配置 ──────────────────────────────────
 (custom/defcustom :krro.painting/viewport-pan-speed
@@ -23,16 +23,19 @@
                   :group :krro.painting/edit
                   :doc "滚轮缩放灵敏度，表示每一格 delta 的缩放因子。1.1 表示每格放大 10%。")
 
-;; ── 工具实现 ──────────────────────────────────
 (defrecord ViewPortTool [initial-mouse   ;; atom {:x :y}
                          last-event     ;; atom 最后一次事件
                          init-viewport  ;; atom 初始视口
                          moving]        ;; atom boolean
   tb/ITool
-  (begin! [this layer ctx])
-  (end! [this layer ctx])
+  (id [_] :viewport)
+  (overlay [_] nil)
+  (begin! [_ layer state ctx]
+    {:layer layer :state state})
+  (end! [_ layer state ctx]
+    {:layer layer :state state})
 
-  (apply! [this layer event ctx]
+  (apply! [_ layer state event ctx]
     (let [btn (:mouse-button event)
           type (:type event)]
       (when (= btn :middle)
@@ -50,16 +53,12 @@
             (let [{:keys [x y]} @initial-mouse
                   dx (- (:x event) x)
                   dy (- (:y event) y)
-                  ;; 读取配置
                   speed (custom/get-custom :krro.painting/viewport-pan-speed (:frame ctx))
                   dead-zone (custom/get-custom :krro.painting/viewport-pan-dead-zone (:frame ctx))
-                  ;; 应用速度
                   dx' (* speed dx)
                   dy' (* speed dy)
-                  ;; 死区判断
                   _ (when (and (< (Math/abs (double dx')) dead-zone)
                                (< (Math/abs (double dy')) dead-zone))
-                      ;; 位移太小，不做任何视口更新
                       (throw (Exception. "dead-zone")))
                   {:keys [offset-x offset-y zoom]} @init-viewport
                   new-offset-x (- offset-x (/ dx' zoom))
@@ -92,13 +91,11 @@
 
           :idle))))
 
-  (preview! [this layer ctx] nil)
-  (commit! [this layer ctx] nil))
+  (preview! [_ layer state ctx]
+    {:layer layer :state (assoc state :dirty-tiles nil)})
+  (commit! [_ layer state ctx]
+    ;; 视口操作需要全图刷新，因此将 dirty-tiles 设为 nil
+    {:layer layer :state (assoc state :dirty-tiles nil)}))
 
-(defn make-viewport-tool
-  "创建视口操作工具，内部 atom 自动初始化。"
-  []
-  (->ViewPortTool (atom nil)    ;; initial-mouse
-                  (atom nil)    ;; last-event
-                  (atom nil)    ;; init-viewport
-                  (atom false))) ;; moving
+(defn make-viewport-tool []
+  (->ViewPortTool (atom nil) (atom nil) (atom nil) (atom false)))

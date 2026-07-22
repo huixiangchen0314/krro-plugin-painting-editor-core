@@ -72,21 +72,19 @@
 (defn layer-panel-vnode [canvas-id f]
   (let [layers      (pc/layers-by-id! canvas-id)
         selected-id (state/selected-layer-id canvas-id)
-        flat        (flatten-layers layers)]
+        flat        (reverse (flatten-layers layers))]
     [:block {:class "layer-browser" :direction :vertical}
      [:text {:class "layer-browser-title" :content "Layers"}]
-     ;; 图层列表：将 mapv 结果展开为多个子节点
+     ;; 图层列表
      (into [:block {:class "layer-list" :direction :vertical}]
            (mapv (fn [info] (layer-row-vnode info selected-id canvas-id)) flat))
      ;; 工具栏
      [:block {:class "layer-toolbar" :direction :horizontal}
-      [:button {:class "layer-toolbar-button" :content "＋"
-                :on-click (fn [_] (layer-undo/add-raster-layer-over-selected-undo! canvas-id))}]
+      ;; 使用自定义弹出组件代替原来的“＋”按钮
+      [:krro.painting/add-layer-popup {:krro.painting/canvas-id canvas-id}]
       [:button {:class "layer-toolbar-button" :content "×"
                 :on-click (fn [_]
-                            (when-let [path (layer/selected-layer-path canvas-id)]
-                              (layer-undo/remove-layer-at-undo! canvas-id path)))}]
+                            (layer-undo/remove-selected-layer-undo! canvas-id))}]
       [:button {:class "layer-toolbar-button" :content "▣"
                 :on-click (fn [_]
-                            (when-let [sid (state/selected-layer-id canvas-id)]
-                              (layer-undo/duplicate-layer-undo! canvas-id sid)))}]]]))
+                            (layer-undo/duplicate-selected-layer-undo! canvas-id))}]]]))
