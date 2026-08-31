@@ -24,18 +24,18 @@
 
 ;; ── 图层行 vnode ────────────────────────────────────
 (defn- layer-row-vnode [{:keys [layer path indent]} selected-id canvas-id]
-  (let [lid       (:id layer)
-        name      (or (:name layer) (str lid))
-        visible?  (get layer :visible? true)
-        locked?   (:locked? (pm/layer-meta lid))
+  (let [layer-id       (:id layer)
+        name      (or (:name layer) (str layer-id))
+        visible  (get layer :visible true)
+        locked   (:locked? (pm/layer-meta layer-id))
         is-group? (= :group (:type layer))
         indent-str (apply str (repeat indent "  "))]
-    [:block {:key lid                                    ;; 稳定 key 用于 diff 复用
+    [:block {:key layer-id                                    ;; 稳定 key 用于 diff 复用
              :class "layer-row"
              :style {:padding-left (str (* indent 12) "px")}  ;; 字符串值
              ;; 拖拽源：传递图层 ID 字符串
              :drag-source (drag-spec/drag-source
-                            (fn [_] (str lid))
+                            (fn [_] (str layer-id))
                             :modes [:move])
              ;; 拖拽目标：接受移动并处理放置
              :drag-target (drag-spec/drag-target
@@ -43,7 +43,7 @@
                             (fn [node e]
                               ;; 动态获取路径，不依赖节点用户数据
                               (let [source-id (keyword (:data e))
-                                    target-id lid
+                                    target-id layer-id
                                     layers (pc/layers-by-id! canvas-id)
                                     source-path (layer-core/find-layer-path source-id layers)
                                     target-path (layer-core/find-layer-path target-id layers)]
@@ -52,26 +52,26 @@
              :direction :horizontal}
      ;; 可见性复选框（仅非组图层显示）
      (when-not is-group?
-       [:check-box {:checked? visible?
-                    :getter   (fn [db-map] (pc/visible-layer? canvas-id lid db-map))
-                    :setter   (fn [v] (layer-undo/set-layer-visibility! canvas-id lid v))}])
+       [:check-box {:checked? visible
+                    :getter   (fn [db-map] (pc/visible-layer? canvas-id layer-id db-map))
+                    :setter   (fn [v] (layer-undo/set-layer-visibility! canvas-id layer-id v))}])
      ;; 图层名称（点击选中）
      [:text {:content  (str indent-str name)
-             :style    (if (= lid selected-id)
+             :style    (if (= layer-id selected-id)
                          {:fill "yellow" :font-weight "bold"}   ;; 字符串值
                          {:fill "lightgray"})
-             :on-click (fn [_] (layer/set-selected-layer-id! canvas-id lid))}]
+             :on-click [:krro.painting/select-layer layer-id]}]
      ;; 锁定图标
-     (when locked?
+     (when locked
        [:text {:content "🔒" :style {:font-size "10" :fill "gray"}}])  ;; 字符串值
      ;; 组展开图标（占位）
      (when is-group?
        [:text {:content "▸" :style {:font-size "10" :fill "lightgray"}}])]))  ;; 字符串值
 
 ;; ── 图层面板（容器 + 列表 + 工具栏） ────────────────
-(defn layer-panel-vnode [canvas-id f]
+(defn layer-panel-vnode [canvas-id _f]
   (let [layers      (pc/layers-by-id! canvas-id)
-        selected-id (state/selected-layer-id canvas-id)
+        selected-id (state/current-layer-id canvas-id)
         flat        (reverse (flatten-layers layers))]
     [:block {:class "layer-browser" :direction :vertical}
      [:text {:class "layer-browser-title" :content "Layers"}]

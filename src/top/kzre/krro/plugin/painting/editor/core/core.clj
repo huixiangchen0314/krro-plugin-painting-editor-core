@@ -8,6 +8,7 @@
     [top.kzre.krro.plugin.painting.core.project.canvas :as pc]
     [top.kzre.krro.plugin.painting.editor.core.mode :as mode]
     [top.kzre.krro.plugin.undo.core]
+    [top.kzre.krro.plugin.painting.editor.core.overlay]
     [top.kzre.krro.ui.javafx.core]))
 
 (defn init []
