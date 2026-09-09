@@ -78,8 +78,9 @@
     [:block {:class "layer-browser" :direction :vertical}
      [:text {:class "layer-browser-title" :content "Layers"}]
      ;; 图层列表
-     (into [:block {:class "layer-list" :direction :vertical}]
-           (mapv (fn [info] (layer-row-vnode info selected-id canvas-id)) flat))
+     [:scroll {}
+      (into [:block {:class "layer-list" :direction :vertical}]
+            (mapv (fn [info] (layer-row-vnode info selected-id canvas-id)) flat))]
      ;; 工具栏
      [:block {:class "layer-toolbar" :direction :horizontal}
       ;; 使用自定义弹出组件代替原来的“＋”按钮

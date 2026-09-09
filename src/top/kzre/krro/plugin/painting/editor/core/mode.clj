@@ -6,12 +6,8 @@
     [top.kzre.krro.core.hook :as hook]
     [top.kzre.krro.plugin.painting.core.project.canvas :as pc]
     [top.kzre.krro.plugin.painting.core.spec :as spec]
-    [top.kzre.krro.plugin.painting.core.state :as state]
-    [top.kzre.krro.plugin.painting.core.store :as store]
     [top.kzre.krro.plugin.painting.editor.core.ui.layer-browser :as lb]
-    [top.kzre.krro.plugin.painting.editor.core.ui.tool-bar :as tb])
-  (:import
-   (java.util UUID)))
+    [top.kzre.krro.plugin.painting.editor.core.ui.tool-bar :as tb]))
 ;; TODO 拆分成core层 和 editor 两个模块，前者定义核心数据和krro.core集成，后者集成javafx-renderer做ui.
 ;; krro-plugin-painting-core
 ;; krro-plugin-painting-editor-core 核心UI 描述，使用平台无关的描述spec,使用一些约定的tag，由具体平台提供.
@@ -19,18 +15,18 @@
 ;; krro-plugin-painting-editor 编辑器核心集成.
 ;; krro-plugin-painting-cs GPU 加速实现 lwjgl
 
-(defn maybe-refresh-frame-fn!
+(defn ^:deprecated maybe-refresh-frame-fn!
   [canvas-id f]
   (when (= (frame/param f spec/canvas-id-key) canvas-id)
     (core/rerender! f)))
 
-(defn create-maybe-refresh-frame-fn!
+(defn ^:deprecated create-maybe-refresh-frame-fn!
   [f]
   (fn [canvas-id]
     (pc/canvas-data! canvas-id)
     (maybe-refresh-frame-fn! canvas-id f)))
 
-(defn- watch-canvas-id [f]
+(defn ^:deprecated watch-canvas-id [f]
   (let [watch-key ::canvas-id-watch]
     (add-watch (frame/params-atom f) watch-key
                (fn [_ _ old-params new-params]
@@ -39,21 +35,21 @@
                    (core/rerender! f))))
     watch-key))
 
-(defn- watch-layer-changed-changed!
+(defn ^:deprecated watch-layer-changed-changed!
   "- 当图层更新时候，刷新UI布局."
   [f]
   (let [cb (create-maybe-refresh-frame-fn! f)]
     (hook/add-hook! spec/layer-changed-hook-key cb)
     cb))
 
-(defn- unwatch-canvas-id [f watch-key]
+(defn ^:deprecated unwatch-canvas-id [f watch-key]
   (remove-watch (frame/params-atom f) watch-key))
 
 
-(defn- unwatch-selected-layer-changed! [cb]
+(defn ^:deprecated unwatch-selected-layer-changed! [cb]
   (hook/remove-hook! spec/selected-layer-changed-hook-key cb))
 
-(defn- watch-selected-layer-changed-per-frame!
+(defn ^:deprecated watch-selected-layer-changed-per-frame!
   "- 当选中图层更新时候，刷新预览状态."
   [f]
   (let [cb (fn [canvas-id layer-id]
@@ -61,25 +57,20 @@
     (hook/add-hook! spec/selected-layer-changed-hook-key cb)
     cb))
 
-(defn unwatch-selected-layer-changed-per-frame! [cb]
+(defn ^:deprecated unwatch-selected-layer-changed-per-frame! [cb]
   (hook/remove-hook! spec/selected-layer-changed-hook-key cb))
 
-(defn layout-fn [f]
-  (let [canvas-id (frame/ensure-param! f spec/canvas-id-key #(keyword (str (UUID/randomUUID))))
-        _rt       (state/ensure-runtime! canvas-id 800 1000)]
-    ;; TODO 创建图层的api, 那时候在
-    (store/reg-canvas-store canvas-id)
+(defn layout-fn [frame]
+  (if-let [canvas-id (frame/param frame spec/canvas-id-key)]
     [:split {:key :root :direction :vertical}
      ;; 顶部工具选择栏
-     (tb/tool-bar-vnode canvas-id f)
+     (tb/tool-bar-vnode canvas-id frame)
      [:split {:direction :horizontal}
       ;; 左侧画布
-      [:krro.painting/canvas {:key canvas-id
-                              :krro.painting/canvas-id canvas-id
-                              :krro.painting/canvas-width 800
-                              :krro.painting/canvas-height 600}]
+      [:krro.painting/canvas {:krro.painting/canvas-id canvas-id}]
       ;; 右侧图层面板
-      (lb/layer-panel-vnode canvas-id f)]]))
+      (lb/layer-panel-vnode canvas-id frame)]]
+    (throw (ex-info "canvas-id is nil!" {}))))
 
 (defn mount
   []
@@ -107,7 +98,4 @@
                     (when-let [cb (frame/param f ::layer-changed-per-frame-watch)]
                       (unwatch-selected-layer-changed-per-frame! cb)
                       (frame/remove-param! f ::layer-changed-per-frame-watch))
-                    ;; 清理 reframe
-                    (when-let [canvas-id (frame/param f spec/canvas-id-key)]
-                      (store/unreg-canvas-store canvas-id)
-                      (frame/remove-param! f spec/canvas-id-key)))))
+                    )))
