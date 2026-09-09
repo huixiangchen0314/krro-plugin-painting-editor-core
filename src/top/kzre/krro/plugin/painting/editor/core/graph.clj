@@ -2,7 +2,7 @@
 
 (defprotocol IGraphicsContext
   "抽象图形上下文，用于 overlay 绘制，与具体 UI 框架解耦。"
-
+  (submit! [this f] "投递任务到该上下文执行")
   ;; ---- 清除与画布信息 ----
   (clear! [this] "清除整个绘制区域。")
   (get-width [this] "获取画布宽度。")

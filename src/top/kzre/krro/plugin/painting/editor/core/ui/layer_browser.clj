@@ -8,7 +8,8 @@
     [top.kzre.krro.plugin.painting.core.state :as state]
     [top.kzre.krro.plugin.painting.core.project.canvas :as pc]
     [top.kzre.krro.plugin.painting.core.project.layer-meta :as pm]
-    [top.kzre.krro.ui.core.spec.drag :as drag-spec]))
+    [top.kzre.krro.ui.core.spec.drag :as drag-spec]
+    [top.kzre.krro.core.core :as krro]))
 
 ;; ── 内部工具：递归展平图层 ──────────────────────────
 (defn- flatten-layers
@@ -32,6 +33,7 @@
         indent-str (apply str (repeat indent "  "))]
     [:block {:key layer-id                                    ;; 稳定 key 用于 diff 复用
              :class "layer-row"
+             :stylesheet "classpath://stylesheets/main.edn"
              :style {:padding-left (str (* indent 12) "px")}  ;; 字符串值
              ;; 拖拽源：传递图层 ID 字符串
              :drag-source (drag-spec/drag-source
@@ -52,7 +54,7 @@
              :direction :horizontal}
      ;; 可见性复选框（仅非组图层显示）
      (when-not is-group?
-       [:check-box {:checked? visible
+       [:check-box {:checked visible
                     :getter   (fn [db-map] (pc/visible-layer? canvas-id layer-id db-map))
                     :setter   (fn [v] (layer-undo/set-layer-visibility! canvas-id layer-id v))}])
      ;; 图层名称（点击选中）

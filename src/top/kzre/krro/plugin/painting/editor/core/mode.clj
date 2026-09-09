@@ -1,15 +1,15 @@
 (ns top.kzre.krro.plugin.painting.editor.core.mode
   "绘画模式定义，使用新的 define-major-mode 宏。"
   (:require
-   [top.kzre.krro.core.core :as core]
-   [top.kzre.krro.core.frame :as frame]
-   [top.kzre.krro.core.hook :as hook]
-   [top.kzre.krro.plugin.painting.core.project.canvas :as pc]
-   [top.kzre.krro.plugin.painting.core.spec :as spec]
-   [top.kzre.krro.plugin.painting.core.state :as state]
-   [top.kzre.krro.plugin.painting.core.store :as store]
-   [top.kzre.krro.plugin.painting.editor.core.ui.layer-browser :as lb]
-   [top.kzre.krro.plugin.painting.editor.core.ui.tool-bar :as tb])
+    [top.kzre.krro.core.core :as core]
+    [top.kzre.krro.core.frame :as frame]
+    [top.kzre.krro.core.hook :as hook]
+    [top.kzre.krro.plugin.painting.core.project.canvas :as pc]
+    [top.kzre.krro.plugin.painting.core.spec :as spec]
+    [top.kzre.krro.plugin.painting.core.state :as state]
+    [top.kzre.krro.plugin.painting.core.store :as store]
+    [top.kzre.krro.plugin.painting.editor.core.ui.layer-browser :as lb]
+    [top.kzre.krro.plugin.painting.editor.core.ui.tool-bar :as tb])
   (:import
    (java.util UUID)))
 ;; TODO 拆分成core层 和 editor 两个模块，前者定义核心数据和krro.core集成，后者集成javafx-renderer做ui.
@@ -69,7 +69,7 @@
         _rt       (state/ensure-runtime! canvas-id 800 1000)]
     ;; TODO 创建图层的api, 那时候在
     (store/reg-canvas-store canvas-id)
-    [:block {:key :root :direction :vertical}
+    [:split {:key :root :direction :vertical}
      ;; 顶部工具选择栏
      (tb/tool-bar-vnode canvas-id f)
      [:split {:direction :horizontal}
@@ -81,11 +81,15 @@
       ;; 右侧图层面板
       (lb/layer-panel-vnode canvas-id f)]]))
 
-(defn register!
+(defn mount
   []
-  (core/defmajor :krro.painting/painting "Painting Mode."
-                 :layout layout-fn
-                 :keymap {:l :krro.painting/log-layers})
+  (core/define-major-mode
+    :krro.painting/painting
+    :layout layout-fn
+    :keymap
+    {:l :krro.painting/log-layers
+     :s :krro.painting.anchor/enter-adjust-width-modal
+     :e :krro.painting.anchor/enter-extrude-anchor-modal})
 
   (hook/add-hook! :krro.painting/painting-mode-enter-hook
                   (fn [f]
@@ -106,6 +110,4 @@
                     ;; 清理 reframe
                     (when-let [canvas-id (frame/param f spec/canvas-id-key)]
                       (store/unreg-canvas-store canvas-id)
-                      (frame/remove-param! f spec/canvas-id-key))))
-
-  )
+                      (frame/remove-param! f spec/canvas-id-key)))))
