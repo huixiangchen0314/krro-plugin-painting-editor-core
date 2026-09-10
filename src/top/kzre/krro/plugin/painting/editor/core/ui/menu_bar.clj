@@ -2,7 +2,9 @@
   "菜单栏")
 
 (defn menu-bar [frame]
-  [:menu-bar {:class "main-menu"}
+  [:menu-bar {:class "main-menu"
+              :style {:max-height "25px"}
+              :grow false}
    [:menu {:content "文件"}
     [:menu-item {:content "新建" :on-action :krro.file/new}]
     [:menu-item {:content "打开..." :on-action :krro.file/open}]

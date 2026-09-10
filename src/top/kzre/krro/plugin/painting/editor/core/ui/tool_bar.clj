@@ -9,7 +9,8 @@
 (defn tool-bar-vnode [canvas-id frame]
   ;; TODO 替换为查询
   (let [current-tool (state/current-tool canvas-id)]
-    (into [:tool-bar {:class "tool-bar"}]
+    (into [:tool-bar {:class "tool-bar"
+                      :max-height 50}]
           (for [{:keys [id name icon]} (tools/tools)]
             [:button {:key id
                       :class (str "tool-btn" (when (= id current-tool) " active"))

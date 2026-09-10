@@ -7,6 +7,7 @@
     [top.kzre.krro.plugin.painting.core.project.canvas :as pc]
     [top.kzre.krro.plugin.painting.core.spec :as spec]
     [top.kzre.krro.plugin.painting.editor.core.ui.layer-browser :as lb]
+    [top.kzre.krro.plugin.painting.editor.core.ui.menu-bar :as menu-bar]
     [top.kzre.krro.plugin.painting.editor.core.ui.tool-bar :as tb]))
 ;; TODO 拆分成core层 和 editor 两个模块，前者定义核心数据和krro.core集成，后者集成javafx-renderer做ui.
 ;; krro-plugin-painting-core
@@ -62,14 +63,18 @@
 
 (defn layout-fn [frame]
   (if-let [canvas-id (frame/param frame spec/canvas-id-key)]
-    [:split {:key :root :direction :vertical}
-     ;; 顶部工具选择栏
-     (tb/tool-bar-vnode canvas-id frame)
-     [:split {:direction :horizontal}
-      ;; 左侧画布
-      [:krro.painting/canvas {:krro.painting/canvas-id canvas-id}]
-      ;; 右侧图层面板
-      (lb/layer-panel-vnode canvas-id frame)]]
+    [:block {:direction :vertical}
+     (menu-bar/menu-bar frame)
+     [:block {:direction :vertical
+              :grow true}
+      ;; 顶部工具选择栏
+      (tb/tool-bar-vnode canvas-id frame)
+      [:split {:direction :horizontal
+               :grow true}
+       ;; 左侧画布
+       [:krro.painting/canvas {:krro.painting/canvas-id canvas-id}]
+       ;; 右侧图层面板
+       (lb/layer-panel-vnode canvas-id frame)]]]
     (throw (ex-info "canvas-id is nil!" {}))))
 
 (defn mount
